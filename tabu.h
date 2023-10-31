@@ -68,6 +68,5 @@ class TSP_Tabu
 
 public:
     TSP_Tabu(const Adjacency_matrix& adjm) : adjm{adjm}, tabu_matrix{adjm.vertexCount()} {}
-
-    TSP_result solve(const std::chrono::seconds time_limit);
+    TSP_result solve(int maxIterations);
 };
