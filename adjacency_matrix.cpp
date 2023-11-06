@@ -12,6 +12,7 @@ int rand(int min, int max)
 {
     static std::mt19937 rng(std::random_device{}());
     return std::uniform_int_distribution<int>(min, max)(rng);
+    //return std::clamp(std::normal_distribution<float>(50, 10)(rng), 0.f, 100.f);
 }
 
 

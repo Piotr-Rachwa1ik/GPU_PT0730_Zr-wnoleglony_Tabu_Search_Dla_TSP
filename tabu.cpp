@@ -8,6 +8,7 @@
 #include <type_traits>
 #include <limits>
 
+
 int TSP_Tabu::cost(const std::vector<unsigned int>& path) const
 {
     int cost = adjm.weight(path.back(), path.front());
@@ -24,6 +25,7 @@ TSP_Tabu::Rotation_description TSP_Tabu::generateBestRotate(const std::vector<un
 
     const auto parent_cost = cost(parent);
 
+#pragma omp parallel for
     for (int pos = 0; pos < adjm.vertexCount() - 1; pos++)
     {
         for (int len = 2; pos + len <= adjm.vertexCount() && len < adjm.vertexCount(); len++)
@@ -39,16 +41,20 @@ TSP_Tabu::Rotation_description TSP_Tabu::generateBestRotate(const std::vector<un
 
                     auto current_cost = parent_cost;
 
+                
                     //odjecie wag krawedzi, ktore nie wystapia po rotacji
                     current_cost -= adjm.weight(parent[mod(pos - 1)], parent[pos]);
                     current_cost -= adjm.weight(parent[pos + offset - 1], parent[pos + offset]);
                     current_cost -= adjm.weight(parent[pos + len - 1], parent[mod(pos + len)]);       
+                    
 
                     //dodanie wag krawedzi, ktore zostana dodane w wyniku rotacji
                     current_cost += adjm.weight(parent[mod(pos - 1)], parent[pos + offset]);
                     current_cost += adjm.weight(parent[pos + len - 1], parent[pos]);
                     current_cost += adjm.weight(parent[pos + offset - 1], parent[mod(pos + len)]);
 
+
+#pragma omp critical 
                     if (moveValue(parent_cost, current_cost) > best_val)
                     {
                         best_val = moveValue(parent_cost, current_cost);
@@ -78,7 +84,7 @@ int TSP_Tabu::moveValue(int parent_cost, int neighbour_cost) const
 }
 
 
-TSP_result TSP_Tabu::solve(int maxIterations)
+TSP_result TSP_Tabu::solve(const std::chrono::seconds time_limit)
 {
     const auto start_t = std::chrono::steady_clock::now();
 
@@ -93,7 +99,8 @@ TSP_result TSP_Tabu::solve(int maxIterations)
     auto best_solution = current_solution;
     auto best_cost = current_cost;
 
-    for (int iteration = 0; iteration < maxIterations; iteration++)
+    int it = 0;
+    while (std::chrono::steady_clock::now() - start_t < time_limit)
     {
         auto [pos, len, offset, rot_value] = generateBestRotate(current_solution);
         rotate(current_solution, pos, len, offset);
@@ -107,7 +114,10 @@ TSP_result TSP_Tabu::solve(int maxIterations)
         }
 
         tabu_matrix.update();
+        it++;
     }
+
+    std::cout << "iter: " << it << "\n";
 
     return { std::move(best_solution), best_cost };
 }
