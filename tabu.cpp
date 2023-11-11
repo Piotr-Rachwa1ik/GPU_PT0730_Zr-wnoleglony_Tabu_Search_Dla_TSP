@@ -7,6 +7,7 @@
 #include <random>
 #include <type_traits>
 #include <limits>
+#include <cstdlib>
 
 
 int TSP_Tabu::cost(const std::vector<unsigned int>& path) const
@@ -81,8 +82,26 @@ int TSP_Tabu::moveValue(int parent_cost, int neighbour_cost) const
     return parent_cost - neighbour_cost;
 }
 
+TSP_result TSP_Tabu::solve(const std::chrono::seconds time_limit, Exec_policy policy)
+{
+    switch(policy)
+    {
+        case Exec_policy::cpu_single:
+            return solve_cpu_single(time_limit);
+            break;
+        case Exec_policy::cpu_multi:
+            return TSP_result{};
+        case Exec_policy::cuda:
+#ifdef BUILD_CUDA_TABU
+            return solve_cuda(time_limit);
+#endif
+            return TSP_result{};
+    }
+}
 
-TSP_result TSP_Tabu::solve(const std::chrono::seconds time_limit)
+
+
+TSP_result TSP_Tabu::solve_cpu_single(const std::chrono::seconds time_limit)
 {
     const auto start_t = std::chrono::steady_clock::now();
 
