@@ -9,7 +9,7 @@ int main()
     adjm.loadFromFile("tsp_171.txt");
 
     TSP_Tabu tabu{adjm};
-    auto [path, cost] = tabu.solve(std::chrono::seconds{1});
+    auto [path, cost] = tabu.solve(std::chrono::seconds{1}, TSP_Tabu::Exec_policy::cuda);
 
     std::cout << "obliczony koszt: " << cost << "\n";
     std::cout << "obliczony cykl: ";
