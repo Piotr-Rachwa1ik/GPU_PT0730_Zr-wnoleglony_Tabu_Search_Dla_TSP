@@ -90,12 +90,12 @@ TSP_result TSP_Tabu::solve(const std::chrono::seconds time_limit, Exec_policy po
             return solve_cpu_single(time_limit);
             break;
         case Exec_policy::cpu_multi:
-            std::abort();
+            return TSP_result{};
         case Exec_policy::cuda:
 #ifdef BUILD_CUDA_TABU
             return solve_cuda(time_limit);
 #endif
-            std::abort();
+            return TSP_result{};
     }
 }
 
