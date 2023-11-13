@@ -7,6 +7,9 @@
 #include <random>
 #include <type_traits>
 #include <limits>
+#include <cstdlib>
+#include <thread>
+#include <atomic>
 
 
 int TSP_Tabu::cost(const std::vector<unsigned int>& path) const
@@ -25,7 +28,6 @@ TSP_Tabu::Rotation_description TSP_Tabu::generateBestRotate(const std::vector<un
 
     const auto parent_cost = cost(parent);
 
-#pragma omp parallel for
     for (int pos = 0; pos < adjm.vertexCount() - 1; pos++)
     {
         for (int len = 2; pos + len <= adjm.vertexCount() && len < adjm.vertexCount(); len++)
@@ -54,7 +56,6 @@ TSP_Tabu::Rotation_description TSP_Tabu::generateBestRotate(const std::vector<un
                     current_cost += adjm.weight(parent[pos + offset - 1], parent[mod(pos + len)]);
 
 
-#pragma omp critical 
                     if (moveValue(parent_cost, current_cost) > best_val)
                     {
                         best_val = moveValue(parent_cost, current_cost);
@@ -83,8 +84,61 @@ int TSP_Tabu::moveValue(int parent_cost, int neighbour_cost) const
     return parent_cost - neighbour_cost;
 }
 
+TSP_result TSP_Tabu::solve(const std::chrono::seconds time_limit, Exec_policy policy)
+{
+    switch(policy)
+    {
+        case Exec_policy::cpu_single:
+            return solve_cpu_single(time_limit);
+        case Exec_policy::cpu_multi:
+            return solve_cpu_multi(time_limit);
+        case Exec_policy::cuda:
+#ifdef BUILD_CUDA_TABU
+            return solve_cuda(time_limit);
+#endif
+            return TSP_result{};
+    }
+}
 
-TSP_result TSP_Tabu::solve(const std::chrono::seconds time_limit)
+TSP_result TSP_Tabu::solve_cpu_multi(const std::chrono::seconds time_limit)
+{
+    std::vector<TSP_Tabu> tabus;
+    for(int i=0; i < 8; i++)
+    {
+        tabus.push_back(*this);
+    }
+
+    std::vector<TSP_result> results(tabus.size());
+    std::vector<std::jthread> threads(tabus.size());
+
+    std::atomic<int> iter = 0;
+    for(int i=0; i < tabus.size(); i++)
+    {
+        threads[i] = std::jthread{[&, i]{
+            auto [result, it] = tabus[i].solve_cpu_single_impl(time_limit);
+            results[i] = std::move(result);
+            iter += it;
+        }};
+    }
+
+    for(int i=0; i < tabus.size(); i++)
+    {
+        threads[i].join();
+    }
+
+    auto it = std::min_element(results.begin(), results.end(), [](const auto& a, const auto& b) {return a.cost < b.cost;});
+    std::cout << "iter: " << iter << "\n";
+    return *it;
+}
+
+TSP_result TSP_Tabu::solve_cpu_single(const std::chrono::seconds time_limit)
+{
+    auto [result, it] = solve_cpu_single_impl(time_limit);
+    std::cout << "iter: " << it << "\n";
+    return std::move(result);
+}
+
+std::pair<TSP_result, int> TSP_Tabu::solve_cpu_single_impl(const std::chrono::seconds time_limit)
 {
     const auto start_t = std::chrono::steady_clock::now();
 
@@ -117,7 +171,5 @@ TSP_result TSP_Tabu::solve(const std::chrono::seconds time_limit)
         it++;
     }
 
-    std::cout << "iter: " << it << "\n";
-
-    return { std::move(best_solution), best_cost };
+    return {{ std::move(best_solution), best_cost }, it};
 }
