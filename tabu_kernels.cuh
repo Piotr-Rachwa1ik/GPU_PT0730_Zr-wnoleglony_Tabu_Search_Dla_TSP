@@ -56,6 +56,7 @@ __global__ void generate_rotates(const int* adj_matrix, const int* tabu_matrix, 
                 for (int offset_o = 1; offset_o + idx_z < len; offset_o += blockDim.z * gridDim.z)
                 {
                     int offset = offset_o + idx_z;
+                    
                     // printf("pos: %d, len: %d, off: %d\n", pos, len, offset);
                     int idx = pos * vertex_count * vertex_count + len * vertex_count + offset;
                     if (get_tabu_matrix_value(tabu_matrix, vertex_count, pos, len, offset) == 0)

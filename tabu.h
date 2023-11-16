@@ -87,6 +87,4 @@ public:
     };
 
     TSP_result solve(const std::chrono::seconds time_limit, Exec_policy policy);
-    TSP_result solve_cpu_single(const std::chrono::seconds time_limit);
-    TSP_result solve_cuda(const std::chrono::seconds time_limit);
 };

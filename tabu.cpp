@@ -102,6 +102,7 @@ TSP_result TSP_Tabu::solve(const std::chrono::seconds time_limit, Exec_policy po
 
 TSP_result TSP_Tabu::solve_cpu_multi(const std::chrono::seconds time_limit)
 {
+    std::cout << "cpu multi\n";
     std::vector<TSP_Tabu> tabus;
     for(int i=0; i < 8; i++)
     {
@@ -133,6 +134,7 @@ TSP_result TSP_Tabu::solve_cpu_multi(const std::chrono::seconds time_limit)
 
 TSP_result TSP_Tabu::solve_cpu_single(const std::chrono::seconds time_limit)
 {
+    std::cout << "cpu single\n";
     auto [result, it] = solve_cpu_single_impl(time_limit);
     std::cout << "iter: " << it << "\n";
     return std::move(result);
@@ -148,6 +150,8 @@ std::pair<TSP_result, int> TSP_Tabu::solve_cpu_single_impl(const std::chrono::se
     std::vector<unsigned int> current_solution;
     current_solution.resize(adjm.vertexCount());
     for (int i = 0; i < adjm.vertexCount(); i++) current_solution[i] = i;
+    static std::mt19937 rng(std::random_device{}());
+    // std::shuffle(current_solution.begin(), current_solution.end(), rng);
     int current_cost = cost(current_solution);
 
     auto best_solution = current_solution;
