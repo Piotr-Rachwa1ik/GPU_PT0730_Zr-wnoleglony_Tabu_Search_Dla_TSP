@@ -33,7 +33,6 @@ cuda_uptr<T> makeCudaBuffer(size_t size)
 {
     T* buf = nullptr;
     auto ret = cudaMalloc((void**)&buf, size*sizeof(T));
-    std::cout << "alloc: " << cudaGetErrorString(ret) << "\n";
     return cuda_uptr<T>{buf};
 }
 
@@ -45,6 +44,7 @@ cuda_uptr<T> makeCudaBuffer(const std::vector<T>& src)
 
 TSP_result TSP_Tabu::solve_cuda(const std::chrono::seconds time_limit)
 {
+    std::cout << "cuda\n";
     std::vector<int> solutions(tabu_matrix.size());
     std::vector<int> configs(tabu_matrix.size() * 3);
 
@@ -113,9 +113,9 @@ TSP_result TSP_Tabu::solve_cuda(const std::chrono::seconds time_limit)
 
         cudaMemcpy(parent_buf.get(), current_solution.data(), current_solution.size() * sizeof(int), cudaMemcpyHostToDevice);
 
-        generate_rotates<<<dim3(24,24,24), dim3(8,8,8) >> >(adjm_buf.get(), tabu_buf.get(), parent_buf.get(), solutions_buf.get(), configs_buf.get(), adjm.vertexCount(), current_cost);
+        generate_rotates<<<dim3(8,8,8), dim3(1,8,64) >> >(adjm_buf.get(), tabu_buf.get(), parent_buf.get(), solutions_buf.get(), configs_buf.get(), adjm.vertexCount(), current_cost);
 
-        auto grid = 16;
+        auto grid = 64;
         auto block = 1024;
 
         init_best << <grid, block >> > (b_buf.get(), solutions.size());

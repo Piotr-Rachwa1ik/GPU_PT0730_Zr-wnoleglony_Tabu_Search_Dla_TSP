@@ -7,6 +7,8 @@ int main()
 {    
     Adjacency_matrix adjm;
     adjm.loadFromFile("tsp_171.txt");
+    // adjm.resize(200);
+    // adjm.generateRandom();
 
     TSP_Tabu tabu{adjm};
 
