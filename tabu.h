@@ -71,6 +71,11 @@ class TSP_Tabu
 
     void rotate(std::vector<unsigned int>& path, int pos, int len, unsigned int offset) const;
 
+    std::pair<TSP_result, int> solve_cpu_single_impl(const std::chrono::seconds time_limit);
+    TSP_result solve_cpu_single(const std::chrono::seconds time_limit);
+    TSP_result solve_cpu_multi(const std::chrono::seconds time_limit);
+    TSP_result solve_cuda(const std::chrono::seconds time_limit);
+
 public:
     TSP_Tabu(const Adjacency_matrix& adjm) : adjm{adjm}, tabu_matrix{adjm.vertexCount()} {}
 
