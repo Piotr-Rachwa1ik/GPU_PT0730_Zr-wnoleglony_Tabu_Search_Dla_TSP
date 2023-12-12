@@ -58,10 +58,22 @@ public:
     }
 };
 
+struct TSP_cuda_config
+{
+    struct xyz { int x,y,z; }; 
+    xyz rotate_grid = {8,8,8};
+    xyz rotate_block = {1,8,64};
+    int init_best_grid = 64;
+    int init_best_block = 1024;
+    int get_best_iter_grid = 64;
+    int get_best_iter_block = 1024;
+};
+
 class TSP_Tabu
 {
     Adjacency_matrix adjm;
     Tabu_matrix tabu_matrix;
+    TSP_cuda_config cuda_cfg;
 
     int cost(const std::vector<unsigned int>& path) const;
     int moveValue(int parent_cost, int neighbour_cost) const;
@@ -74,10 +86,10 @@ class TSP_Tabu
     std::pair<TSP_result, int> solve_cpu_single_impl(const std::chrono::seconds time_limit);
     TSP_result solve_cpu_single(const std::chrono::seconds time_limit);
     TSP_result solve_cpu_multi(const std::chrono::seconds time_limit);
-    TSP_result solve_cuda(const std::chrono::seconds time_limit);
+    TSP_result solve_cuda(const std::chrono::seconds time_limit, const TSP_cuda_config& config = {});
 
 public:
-    TSP_Tabu(const Adjacency_matrix& adjm) : adjm{adjm}, tabu_matrix{adjm.vertexCount()} {}
+    TSP_Tabu(const Adjacency_matrix& adjm, const TSP_cuda_config& cuda_cfg) : adjm{adjm}, tabu_matrix{adjm.vertexCount()}, cuda_cfg{cuda_cfg} {}
 
     enum class Exec_policy
     {
