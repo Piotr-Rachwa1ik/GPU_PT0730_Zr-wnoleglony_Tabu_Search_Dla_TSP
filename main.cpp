@@ -58,6 +58,12 @@ int main()
             adjm.resize(size);
             adjm.generateRandom();
         }},
+        {"wczytaj graf z pliku", [&]{
+            std::cout << "podaj nazwe pliku: ";
+            std::string fname;
+            std::cin >> fname;
+            adjm.loadFromFile(fname);
+        }},
         {"ustaw czas", [&]{
             unsigned int t = 0;
             std::cin >> t;
